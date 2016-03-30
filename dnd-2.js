@@ -10,9 +10,11 @@ $( document ).ready(function() {
 
  
   for ( var i=0; i<segmentList.length; i++ ) {
-    $('<div class="panel-body">' + segmentList[i] + '</div>').data( 'segment', segmentList[i] ).attr( 'id', 'card'+segmentList[i] ).appendTo( '#collapse1' ).draggable({
+	var temp = '#collapse' + (i%3+1);
+    $('<div class="panel-body">' + segmentList[i] + '</div>').data( 'segment', segmentList[i] ).attr( 'id', 'card'+segmentList[i] ).appendTo( temp ).draggable({
 		cursor: 'move',
-		revert: true
+		revert: true,
+		revertDuration: 200
 	});
   }
   
@@ -20,42 +22,39 @@ $( document ).ready(function() {
   $('<div>Drop Here!</div>').data( 'number', i ).attr('id', 'marker1').appendTo( '#dropzone' ).droppable( {
 	//accept: '#collapse1 div',
     hoverClass: 'hovered',
-    drop: handleDrop
+    drop: dropToList
   });
-
 });
 
 var count = 0;
-function handleDrop( event, ui ) {
+function dropToList( event, ui ) {
   
   var slotNumber = $(this).data( 'number' );
   var segment = ui.draggable.data( 'segment' );
-  
-  if(ui.draggable.parent('#collapse1').length){
+  var parentElement = ui.draggable.parent()
+  if(ui.draggable.parent('.draglist').length){
 	var test = $(this).attr('id');
 	if($('#marker1').length != 0){
 		$('#marker1').remove();
-		$('<div class="panel-body">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).appendTo('#dropzone').draggable({
-			containment: '#content',
-			stack: '#cardPile div',
+		$('<div class="panel-body clickable">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).appendTo('#dropzone').draggable({
 			cursor: 'move',
 			revert: true,
 			revertDuration: 0
 		}).droppable({
-			accept: '#collapse1 div, #dropzone div',
-			drop: handleDrop
+			accept: '.draglist div, #dropzone div',
+			drop: dropToList
 		});
 		count++;
 		
 		
 	} else {
-		$('<div class="panel-body">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).insertAfter('#'+test).draggable({
+		$('<div class="panel-body clickable">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).insertAfter('#'+test).draggable({
 			cursor: 'move',
 			revert: true,
 			revertDuration: 0
 		}).droppable({
-			accept: '#collapse1 div, #dropzone div',
-			drop: handleDrop
+			accept: '.draglist div, #dropzone div',
+			drop: dropToList
 		});
 	count++;
 	}
@@ -67,6 +66,12 @@ function handleDrop( event, ui ) {
   }
   updateList(); 
 }
+
+function updateDetails($element){
+	$('#timeframe').val($element.data('segment'));
+
+}
+
 var finalList;
 function updateList(){
 	finalList = [];
@@ -77,4 +82,11 @@ function updateList(){
 			finalList.push($(this).data('segment'));
 		}
 	});
+	
+	$('.clickable').each(function() {
+		var $this = $(this);
+		$this.on("click", function(){
+			updateDetails($this);
+		});
+	}); 
 }
