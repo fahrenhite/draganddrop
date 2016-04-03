@@ -11,7 +11,11 @@ $( document ).ready(function() {
  
   for ( var i=0; i<segmentList.length; i++ ) {
 	var temp = '#collapse' + (i%3+1);
-    $('<div class="panel-body">' + segmentList[i] + '</div>').data( 'segment', segmentList[i] ).attr( 'id', 'card'+segmentList[i] ).appendTo( temp ).draggable({
+    $('<div class="panel-body">' + segmentList[i] + '</div>')
+	.data( 'segment', {segmentId: segmentList[i], reapeatTime: 100, isTime: true, isStory: false, storyDelay: 0} )
+	.attr( 'id', 'card'+segmentList[i] )
+	.appendTo( temp )
+	.draggable({
 		cursor: 'move',
 		revert: true,
 		revertDuration: 200
@@ -19,8 +23,7 @@ $( document ).ready(function() {
   }
   
 
-  $('<div>Drop Here!</div>').data( 'number', i ).attr('id', 'marker1').appendTo( '#dropzone' ).droppable( {
-	//accept: '#collapse1 div',
+  $('<div>Drop Here!</div>').attr('id', 'marker1').appendTo( '#dropzone' ).droppable( {
     hoverClass: 'hovered',
     drop: dropToList
   });
@@ -36,10 +39,14 @@ function dropToList( event, ui ) {
 	var test = $(this).attr('id');
 	if($('#marker1').length != 0){
 		$('#marker1').remove();
-		$('<div class="panel-body clickable">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).appendTo('#dropzone').draggable({
-			cursor: 'move',
-			revert: true,
-			revertDuration: 0
+		$('<div class="panel-body clickable">' + segment.segmentId + '</div>')
+			.data('segment', segment)
+			.attr('id', 'drop'+count)
+			.appendTo('#dropzone')
+			.draggable({
+				cursor: 'move',
+				revert: true,
+				revertDuration: 0
 		}).droppable({
 			accept: '.draglist div, #dropzone div',
 			drop: dropToList
@@ -48,7 +55,11 @@ function dropToList( event, ui ) {
 		
 		
 	} else {
-		$('<div class="panel-body clickable">' + segment + '</div>').data('segment', segment).attr('id', 'drop'+count).insertAfter('#'+test).draggable({
+		$('<div class="panel-body clickable">' + segment.segmentId + '</div>')
+		.data('segment', segment)
+		.attr('id', 'drop'+count)
+		.insertAfter('#'+test)
+		.draggable({
 			cursor: 'move',
 			revert: true,
 			revertDuration: 0
@@ -56,7 +67,7 @@ function dropToList( event, ui ) {
 			accept: '.draglist div, #dropzone div',
 			drop: dropToList
 		});
-	count++;
+		count++;
 	}
   } else {
 	var prevId = $(this).attr('id');
@@ -67,26 +78,52 @@ function dropToList( event, ui ) {
   updateList(); 
 }
 
-function updateDetails($element){
-	$('#timeframe').val($element.data('segment'));
-
-}
-
+var $selectedElement = null;
 var finalList;
 function updateList(){
 	finalList = [];
 
 	$('#dropzone').children().each(function (){
-		if($(this).attr('id')!='marker1' && $(this).attr('id')!='marker2'){
-			//$('<p>'+$(this).attr('id')+'</p>').appendTo('#dialog');)
-			finalList.push($(this).data('segment'));
+		if($(this).attr('id')!='marker1'){
+			finalList.push($(this));
 		}
 	});
 	
 	$('.clickable').each(function() {
 		var $this = $(this);
 		$this.on("click", function(){
-			updateDetails($this);
+			if($selectedElement == $this){
+				$(this).removeClass("panel-footer").addClass("panel-body");
+				$selectedElement = null;
+			} else {	
+				$($selectedElement).removeClass("panel-footer").addClass("panel-body");
+					
+				$selectedElement = $this;
+				$($selectedElement).removeClass("panel-body").addClass("panel-footer");
+				$('#timeframe').val($this.data('segment').segmentId)
+			}
 		});
 	}); 
 }
+
+$(function() {
+    $( "#btnSet" ).button().click(function( event ) {
+        event.preventDefault();
+		$selectedElement.data('segment', $('#timeframe').val());
+		alert($selectedElement.data('segment').segmentId);
+    });
+});
+
+$(function() {
+	$("#btnDelete").button().click(function( event ) {
+		event.preventDefault();
+		$selectedElement.remove();
+		updateList();
+		if(finalList.length == 0){
+			$('<div>Drop Here!</div>').attr('id', 'marker1').appendTo( '#dropzone' ).droppable( {
+				hoverClass: 'hovered',
+				drop: dropToList
+			});
+		}
+	})
+})
